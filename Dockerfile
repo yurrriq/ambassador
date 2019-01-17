@@ -24,27 +24,9 @@
 #
 # The base image (for everything) is defined here.
 
-FROM quay.io/datawire/ambassador-envoy-alpine-stripped:v1.8.0-g14e2c65bb as BASE
-
-MAINTAINER Datawire <flynn@datawire.io>
-LABEL PROJECT_REPO_URL         = "git@github.com:datawire/ambassador.git" \
-      PROJECT_REPO_BROWSER_URL = "https://github.com/datawire/ambassador" \
-      DESCRIPTION              = "Ambassador" \
-      VENDOR                   = "Datawire" \
-      VENDOR_URL               = "https://datawire.io/"
-
-################################################################
-## FIRST STAGE: this is where we do compiles and pip installs and all that.
-
-FROM BASE as builder
+ARG CACHED_CONTAINER_IMAGE
+FROM $CACHED_CONTAINER_IMAGE as builder
 ENV AMBASSADOR_ROOT=/ambassador
-
-# Compilers and pip and all that good stuff go here.
-RUN echo "https://mirror.math.princeton.edu/pub/alpinelinux/v3.8/main" > /etc/apk/repositories && \
-    echo "https://mirror.math.princeton.edu/pub/alpinelinux/v3.8/community" >> /etc/apk/repositories
-
-RUN apk --no-cache add go build-base libffi-dev openssl-dev python3-dev
-RUN pip3 install -U pip
 
 # Set WORKDIR to /ambassador which is the root of all our apps then COPY
 # only requirements.txt to avoid screwing up Docker caching and causing a
@@ -76,14 +58,9 @@ RUN chmod +x kubewatch
 ## SECOND STAGE: this is where we pull over the stuff we need to actually run Ambassador,
 ## _without_ all the compilers and crap.
 
-FROM BASE as foundation
+FROM $CACHED_CONTAINER_IMAGE as foundation
 ENV AMBASSADOR_ROOT=/ambassador
 WORKDIR ${AMBASSADOR_ROOT}
-
-RUN echo "https://mirror.math.princeton.edu/pub/alpinelinux/v3.8/main" > /etc/apk/repositories && \
-    echo "https://mirror.math.princeton.edu/pub/alpinelinux/v3.8/community" >> /etc/apk/repositories
-
-RUN apk --no-cache add curl python3
 
 # One could argue that this is perhaps a bit of a hack. However, it's also the way to
 # get all the stuff that pip installed without needing the whole of the Python dev

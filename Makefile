@@ -190,8 +190,11 @@ export-vars:
 	@echo "export AMBASSADOR_DOCKER_TAG='$(AMBASSADOR_DOCKER_TAG)'"
 	@echo "export AMBASSADOR_DOCKER_IMAGE='$(AMBASSADOR_DOCKER_IMAGE)'"
 
+ambassador-docker-image-cached:
+	docker build $(DOCKER_OPTS) -t $(AMBASSADOR_DOCKER_IMAGE)-cached -f Dockerfile.cached .
+
 ambassador-docker-image: version
-	docker build -q $(DOCKER_OPTS) -t $(AMBASSADOR_DOCKER_IMAGE) .
+	docker build --build-arg CACHED_CONTAINER_IMAGE=$(AMBASSADOR_DOCKER_IMAGE)-cached $(DOCKER_OPTS) -t $(AMBASSADOR_DOCKER_IMAGE) .
 
 docker-login:
 	@if [ -z $(DOCKER_USERNAME) ]; then echo 'DOCKER_USERNAME not defined'; exit 1; fi
